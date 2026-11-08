@@ -11,21 +11,18 @@ seeking new committers at this time, but some small contributions are welcome.
 If you've found a bug, please contribute a failing test case so we can study and fix it.
 
 
-No Generative Tools
--------------------
+AI & Generative Tools Policy
+-----------------------------
 
-We don't use LLMs or generative tools in our source code or documentation. We don't use them for
-human-to-human communication in commits, issues, and pull requests. We believe writing is thinking,
-and want our work to be thoughtful.
+In this repository (`MadAxon/retrofit`), we embrace modern development practices, including the responsible use of AI coding assistants and LLMs by both human engineers and autonomous agents.
 
-We require all contributors to do likewise. Building is more fun when everyone is making an effort.
+However, to preserve software quality, stability, and reliability, all AI-assisted contributions must strictly follow our engineering principles:
 
-We’ll immediately reject LLM-generated contributions to protect the culture of our project. We ban
-repeat offenders.
+1. **Human Ownership & Review**: You are responsible for every line of code submitted. AI output must be rigorously reviewed, understood, and validated before opening a PR.
+2. **Automated Verification**: AI-assisted code must be formatted with Spotless (`./gradlew spotlessApply`), satisfy ErrorProne static analysis, adhere to Java 8 & Android 21 API restrictions, and pass all test suites.
+3. **Reproducers & Tests**: Any bugfix or feature must include comprehensive automated tests (using JUnit 4, Truth, and MockWebServer).
+4. **Developer & Agent Guidelines**: Follow the repository instructions detailed in [AGENTS.md](AGENTS.md) and [docs/instructions/](docs/instructions/).
 
-Some narrow exceptions to this policy:
+> **Important Note for Upstream Contributors**:
+> The upstream Square repository maintains a strict policy banning LLMs and generative tools in source code, documentation, and PRs. If you plan to submit your contributions upstream to Square's official repository, you must comply with their guidelines.
 
-* Non-English speakers may use machine translation tools if they are disclosed.
-* Local autocomplete. (Avoid tools that are metered in tokens.)
-
-Coding is fun.

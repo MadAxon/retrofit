@@ -26,6 +26,16 @@ ProGuard users must manually add the options from
 You might also need [rules for OkHttp][okhttp proguard] which is a dependency of this library.
 
 
+Development & Contributing
+==========================
+
+We welcome contributions from both human engineers and AI coding agents:
+
+* **Contributing Guide**: See [CONTRIBUTING.md](CONTRIBUTING.md) for our contribution workflow and AI policy.
+* **AI Agent & Developer Instructions**: See [AGENTS.md](AGENTS.md) for fast-path commands, invariants, and monorepo overview.
+* **Detailed Technical Guides**: See [docs/instructions/](docs/instructions/) for modular documentation on architecture, build commands, code style, testing, and git conventions.
+
+
 License
 =======
 
