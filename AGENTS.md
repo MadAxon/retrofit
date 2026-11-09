@@ -30,6 +30,8 @@ All contributors and AI agents must adhere strictly to these rules:
    - Bytecode target: **Java 1.8** (`-source 1.8 -target 1.8`, Kotlin `jvmTarget = '1.8'`).
    - Animal Sniffer enforces **Java 8** and **Android API Level 21 (5.0)** runtime compatibility.
    - Do NOT use Java 9+ APIs (`List.of`, `Map.of`, `InputStream.readAllBytes`, etc.) in standard source sets.
+   - **Beware of Java 8 APIs absent on Android API 21**: Android 5.0 (API 21) runtime lacks certain Java 8 APIs (e.g. `java.lang.reflect.Type.getTypeName()`, `Method.isDefault()`, `java.time.*`, `Stream`, `Optional`). In particular, never use `Type.getTypeName()` or Kotlin `type.typeName` in common code (throws `NoSuchMethodError` on API 21); use `Class.getName()` or `type.toString()` instead.
+   - **Animal Sniffer on New Modules**: All library modules (including Kotlin-based modules) must apply the `java-library` plugin so Animal Sniffer automatically validates them against `android-api-level-21:5.0.1_r2`. Always verify with `./gradlew animalsnifferMain`.
    - Multi-Release JAR sources for Java 14+ / Java 16+ live exclusively in `retrofit/src/main/java14` and `retrofit/src/main/java16`.
 3. **Automated Formatting with Spotless**:
    - Always run `./gradlew spotlessApply` before submitting changes.
@@ -41,13 +43,15 @@ All contributors and AI agents must adhere strictly to these rules:
    - Never add external libraries or modify `gradle/libs.versions.toml` without explicit instruction. Use existing OkHttp, Truth, and MockWebServer utilities.
 6. **Mandatory Class Attribution for AI Agents**:
    - Every new class (Java or Kotlin) created by an AI agent must be marked with the comment `// Developed by BROgrammer` immediately above the class declaration.
-
+7. **Cancellation Guards in Asynchronous Callbacks & Adapters**:
+   - 
+   In any asynchronous callbacks (onFailure), **always** check `if (call.isCanceled)` return before resuming a coroutine or throwing errors.
 ---
 
 ## 3. Monorepo Map
 
 - **`retrofit/`**: The core library. Contains dynamic proxy logic, annotation parsers, `Call`, `Callback`, `Converter`, and `CallAdapter` interfaces.
-- **`retrofit-adapters/`**: Adapters for alternative execution models (`guava`, `java8`, `rxjava`, `rxjava2`, `rxjava3`, `scala`).
+- **`retrofit-adapters/`**: Adapters for alternative execution models (`flow`, `guava`, `java8`, `rxjava`, `rxjava2`, `rxjava3`, `scala`).
 - **`retrofit-converters/`**: Converters for serialization libraries (`gson`, `jackson`, `moshi`, `protobuf`, `wire`, `kotlinx-serialization`, `jaxb`, `jaxb3`, `scalars`, `simplexml`).
 - **`retrofit-mock/`**: Mocking utilities (`BehaviorDelegate`, `NetworkBehavior`).
 - **`retrofit-bom/`**: Maven Bill of Materials.
