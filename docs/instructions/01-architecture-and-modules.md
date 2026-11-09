@@ -20,6 +20,7 @@ retrofit/
 │   ├── kotlin-test/                  # Kotlin coroutines, suspend functions, and extension tests
 │   └── test-helpers/                 # Test utilities shared across test suites
 ├── retrofit-adapters/                # CallAdapter.Factory implementations
+│   ├── flow/                         # Kotlin Coroutines Flow adapter
 │   ├── guava/                        # ListenableFuture adapter
 │   ├── java8/                        # CompletableFuture adapter (Java 8+)
 │   ├── rxjava/                       # RxJava 1.x adapter

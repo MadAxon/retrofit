@@ -60,10 +60,17 @@ Because Retrofit is widely used across Android devices and legacy JVM installati
 
 ### Rules for New Code:
 - Do NOT use Java 9+ APIs (such as `List.of()`, `Map.of()`, `InputStream.readAllBytes()`, or `ProcessHandle`) in main source sets. Use `Arrays.asList()`, `Collections.unmodifiableList()`, etc.
+- **Java 8 APIs Absent on Android API 21**: Even though the JVM target is Java 8, Android API 21 (Lollipop 5.0) runtime lacks several Java 8 reflection and standard library APIs:
+  - **`java.lang.reflect.Type.getTypeName()` / Kotlin `type.typeName`**: Added only in Android API 26 (Android 8.0 Oreo). Calling this on Android 21–25 causes a fatal `java.lang.NoSuchMethodError`. Always use `type instanceof Class ? ((Class<?>) type).getName() : type.toString()`, or direct equality check `type == Target.class`.
+  - **`java.lang.reflect.Method.isDefault()`**: Added only in Android API 24 (Android 7.0 Nougat).
+  - **`java.time.*`, `java.util.stream.*`, `java.util.Optional`**: Require Android API 24+ or 26+.
+- **Module Configuration**: Always apply the `java-library` plugin (alongside `org.jetbrains.kotlin.jvm` if Kotlin is used) in any new adapter/converter subproject so that Animal Sniffer automatically hooks into `check` and enforces the `android-api-level-21:5.0.1_r2` signature.
 - If newer language features (e.g., Records in Java 14+) are required, place them in the corresponding Multi-Release source sets (`src/main/java14/`, `src/main/java16/`).
 - Verify compatibility by running:
   ```bash
   ./gradlew animalsnifferMain
+  # Or for a specific subproject:
+  ./gradlew :retrofit-adapters:flow:animalsnifferMain
   ```
 
 ---
