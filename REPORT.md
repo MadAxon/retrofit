@@ -5,7 +5,6 @@ Antigravity + gemini flash 3.8
 **Сессия формирования инструкций**
 > [/grill-me](slashCommand;grill-me) Проанализируй проект, необходимо определить структуру инструкции и добавить инструкции в проект так, чтобы любой инженер и любой AI-агент одинаково корректно работали с кодовой базой.
 ---
-ai агент спрашивает, я отвечаю
 > **Какой архитектурный подход к структуре инструкций предпочтителен для кодовой базы Retrofit?**
 >> (Recommended) Гибридная модульная структура: единое ядро правил в AGENTS.md (с детальными разделами в docs/instructions/), адаптеры для ведущих AI-агентов (CLAUDE.md, .cursorrules / .cursor/rules, .github/copilot-instructions.md) и синхронизированный CONTRIBUTING.md для разработчиков.
 
@@ -24,14 +23,105 @@ ai агент спрашивает, я отвечаю
 > **Стоит ли добавить ссылку на новые инструкции для разработчиков в основной README.md?**
 >> (Recommended) Добавить компактный раздел 'Development & AI Guidelines' в конец README.md с ссылками на CONTRIBUTING.md, AGENTS.md и docs/instructions/.
 ---
->> В рамках выполнения задачи и прохождения интервью /grill-me был проведён детальный анализ кодовой базы Retrofit (MadAxon/retrofit), определена и развернута гибридная модульная структура инструкций, обеспечивающая одинаково точную, согласованную и безопасную работу как инженеров-разработчиков, так и любых AI-агентов (Cursor, Claude Code, GitHub Copilot, Gemini/Antigravity и др.). ...
-
+---
+Далее схема
+> Мой промпт
+>> Ответ агента
+---
+>> В рамках выполнения задачи и прохождения интервью `/grill-me` был проведён детальный анализ кодовой базы **Retrofit** (`MadAxon/retrofit`), определена и развернута **гибридная модульная структура инструкций**, обеспечивающая одинаково точную, согласованную и безопасную работу как инженеров-разработчиков, так и любых AI-агентов (Cursor, Claude Code, GitHub Copilot, Gemini/Antigravity и др.).
+>> ---
+>> ### Архитектура созданной системы инструкций
+>> Система построена по многоуровневому принципу:
+```
+                      ┌────────────────────────┐
+                      │       README.md        │  (Точка входа проекта)
+                      └───────────┬────────────┘
+                                  │
+          ┌───────────────────────┴───────────────────────┐
+          ▼                                               ▼
+┌──────────────────┐                            ┌───────────────────┐
+│ CONTRIBUTING.md  │ (Для инженеров)            │     AGENTS.md     │ (Единое ядро для всех AI)
+└─────────┬────────┘                            └─────────┬─────────┘
+          │                                               │
+          │         ┌───────────────────────────┐         │
+          ├────────►│    docs/instructions/     │◄────────┤
+          │         │ 01-architecture-and-...   │         │
+          │         │ 02-environment-and-...    │         │
+          │         │ 03-code-style-and-...     │         │
+          │         │ 04-testing-guide.md       │         │
+          │         │ 05-agent-and-git-...      │         │
+          │         └───────────────────────────┘         │
+          │                                               │
+          ▼                                               ▼
+  Инженеры команды                      AI-адаптеры с быстрым контекстом:
+                                        ├── CLAUDE.md
+                                        ├── .cursorrules & .cursor/rules/retrofit.mdc
+                                        └── .github/copilot-instructions.md
+```
+>> ---
+>> ### Список добавленных и обновлённых файлов
+>> #### 1. Единое универсальное ядро инструкций
+>> * [`AGENTS.md`](AGENTS.md) — центральный документ открытого стандарта для AI-агентов и инженеров. Содержит быстрый справочник CLI-команд (сборка, тесты, форматирование Spotless, статический анализ ErrorProne), карту монорепозитория, критические ограничения платформы и протокол верификации изменений.
+>> #### 2. Модульная база знаний ([`docs/instructions/`](docs/instructions))
+>> * [`01-architecture-and-modules.md`](docs/instructions/01-architecture-and-modules.md) — архитектура модулей (`retrofit`, `retrofit-adapters`, `retrofit-converters`, `retrofit-mock`, `website`), конвейер динамических прокси (`ServiceMethod`, `RequestFactory`, `Converter`, `CallAdapter`), корутины Kotlin и Multi-Release JAR (`java14`, `java16`).
+>> * [`02-environment-and-build.md`](docs/instructions/02-environment-and-build.md) — требования к окружению (JDK 17+, таргетинг на Java 1.8), полный список команд Gradle для сборки, выборочного тестирования модулей, документации и решения сетевых таймаутов.
+>> * [`03-code-style-and-quality.md`](docs/instructions/03-code-style-and-quality.md) — стандарты форматирования Spotless (`google-java-format`, `ktfmt`), блокирующие правила ErrorProne (запрет wildcard-импортов, обязательный `@Override`, строгие правила `fail()` в тестах) и проверка совместимости API через Animal Sniffer (Java 1.8 и Android API 21).
+>> * [`04-testing-guide.md`](docs/instructions/04-testing-guide.md) — руководство по тестированию с использованием JUnit 4, Google Truth (`assertThat(...)`) и OkHttp `MockWebServer`, паттерны проверки адаптеров и конвертеров, обязательное правило создания reproducer-тестов для багов.
+>> * [`05-agent-and-git-workflow.md`](docs/instructions/05-agent-and-git-workflow.md) — соглашения по ветвлению (основная ветка `trunk`, а не `main`/`master`), правила оформления коммитов и пошаговый протокол верификации изменений перед коммитом/PR.
+>> #### 3. Адаптеры для конкретных AI-ассистентов
+>> * [`CLAUDE.md`](CLAUDE.md) — контекстный адаптер для Claude Code с быстрым набором команд сборки, проверок и ссылками на базу знаний.
+>> * [`.cursorrules`](.cursorrules) — корневой конфигуратор правил для Cursor IDE.
+>> * [`.cursor/rules/retrofit.mdc`](.cursor/rules/retrofit.mdc) — современный формат правил Cursor с автоматическим применением (`alwaysApply: true`) для файлов `*.java`, `*.kt`, `*.gradle`.
+>> * [`.github/copilot-instructions.md`](.github/copilot-instructions.md) — системные инструкции для GitHub Copilot.
+>> #### 4. Обновление документации репозитория
+>> * [`CONTRIBUTING.md`](CONTRIBUTING.md) — исходный пункт о полном запрете генеративного ИИ заменен на сбалансированную политику ответственного использования AI-ассистентов с обязательным ревью человеком, тестами и проверками Spotless, а также предупреждением об ограничениях официального апстрим-репозитория Square.
+>> * [`README.md`](README.md) — добавлен раздел *Development & Contributing* со ссылками на [`CONTRIBUTING.md`](CONTRIBUTING.md), [`AGENTS.md`](AGENTS.md) и [`docs/instructions/`](docs/instructions).
+>> ---
+>> ### Ключевые инварианты, зафиксированные для агентов и инженеров
+>> 1. **Главная ветка**: Только `trunk` (не `main` и не `master`).
+>> 2. **Совместимость рантайма**: Байткод строго Java 1.8 (`-source 1.8 -target 1.8`). Сигнатуры проверяются Animal Sniffer против Java 8 и Android API 21 (Lollipop). Запрещено использовать API Java 9+ в основном коде.
+>> 3. **Форматирование кода**: Обязательный прогон `./gradlew spotlessApply` перед завершением любой задачи.
+>> 4. **Статический анализ**: Ошибки ErrorProne (`WildcardImport`, `MissingOverride`, `MissingFail`, `UnusedVariable` и др.) имеют статус фатальных ошибок компиляции.
+>> 5. **Тестирование**: Фиксация багов начинается с воспроизводящего теста на базе `MockWebServer` и Google Truth.
+---
 > Добавь в инструкцию пункт, который обязывает ai агента помечать каждый новый класс, создаваемым агентом, комментарием "Developed by BROgrammer"
->> Пункт об обязательной маркировке новых классов добавлен во все ключевые конфигурационные файлы и базы знаний проекта. ...
-
+>> Пункт об обязательной маркировке новых классов добавлен во все ключевые конфигурационные файлы и базы знаний проекта.
+>> ### Формат маркировки
+>> Каждый новый класс (на Java или Kotlin), создаваемый AI-агентом, обязан предваряться комментарием:
+```java
+// Developed by BROgrammer
+public final class ExampleService {
+  // ...
+}
+```
+>> или в Kotlin:
+```kotlin
+// Developed by BROgrammer
+class ExampleService {
+  // ...
+}
+```
+>> ---
+>> ### Обновленные файлы инструкций
+>> 1. [`AGENTS.md`](AGENTS.md#L42-L44)
+>>   * Добавлен пункт 6 в раздел **Non-Negotiable Constraints & Invariants**:
+     >>> `6. Mandatory Class Attribution for AI Agents: Every new class (Java or Kotlin) created by an AI agent must be marked with the comment // Developed by BROgrammer immediately above the class declaration.`
+>> 2. [`docs/instructions/03-code-style-and-quality.md`](docs/instructions/03-code-style-and-quality.md#L70-L88)
+>>   * Добавлен специализированный раздел **5. AI Agent Attribution Requirement** с примерами оформления для Java и Kotlin.
+>> 3. [`docs/instructions/05-agent-and-git-workflow.md`](docs/instructions/05-agent-and-git-workflow.md#L76-L78)
+>>   * Добавлено правило 6 в раздел **Strict Rules for AI Agents**.
+>> 4. [`CLAUDE.md`](CLAUDE.md#L30-L32)
+>>   * В раздел **Critical Architecture & Rules** добавлено явное требование по атрибуции классов для Claude Code.
+>> 5. [`.cursorrules`](.cursorrules#L25-L27)
+>>   * В раздел **Key Instructions** добавлен пункт 6 для агента Cursor.
+>> 6. [`.cursor/rules/retrofit.mdc`](.cursor/rules/retrofit.mdc#L18-L20)
+>>   * В раздел **Core Constraints** добавлено строгое правило `Mandatory Class Attribution`.
+>> 7. [`.github/copilot-instructions.md`](.github/copilot-instructions.md#L26-L29)
+>>   * В раздел **Key Constraints** добавлен пункт 6 для GitHub Copilot.
+---
 > Запуш изменения в репозиторий
 >> ...
-
+---
 **Сессия реализации новой фичи**
 > [/plan](slashCommand;plan) Реализовать поддержку Flow<T> в качестве возвращаемого типа при объявлении методов в интерфейсе api. То есть реализовать CallAdapter.Factory для Flow<T>
 >> Подготовил детальный план реализации в артефакте [flow_call_adapter_plan.md](artifacts/flow_call_adapter_plan.md)
