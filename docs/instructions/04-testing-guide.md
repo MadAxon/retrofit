@@ -98,3 +98,20 @@ Whenever investigating or fixing an issue:
    ```bash
    ./gradlew test
    ```
+
+---
+
+## 6. Exhaustive Branch & Polymorphic Input Coverage
+
+When writing or updating tests for any class, utility, converter, or adapter:
+
+1. **Polymorphic & Conditional Branches**:
+   - If an algorithm or method contains branching logic based on runtime type inspection, polymorphic interfaces, or internal conditional checks (e.g. specialized subtype handling), every branch must have explicit, dedicated test cases.
+   - Verifying only standard or baseline variants while leaving specialized conditional branches untested is unacceptable.
+
+2. **Symmetric & Complementary Method Parity**:
+   - Whenever methods exist in complementary pairs (e.g., upper/lower bounds, read/write, serialize/deserialize, forward/reverse mappings), unit tests must provide equal, symmetric test coverage for both counterparts.
+
+3. **Boundary & Exceptional Conditions**:
+   - Always test out-of-bounds indices, boundary edge cases, nullability constraints, and invalid arguments with expected exceptions.
+
