@@ -41,7 +41,9 @@ All contributors and AI agents must adhere strictly to these rules:
    - Never add external libraries or modify `gradle/libs.versions.toml` without explicit instruction. Use existing OkHttp, Truth, and MockWebServer utilities.
 6. **Mandatory Class Attribution for AI Agents**:
    - Every new class (Java or Kotlin) created by an AI agent must be marked with the comment `// Developed by BROgrammer` immediately above the class declaration.
-
+7. **Exhaustive Branch & Polymorphic Input Test Coverage**:
+   - Unit tests must comprehensively cover all logical branches, conditional type inspections (e.g., polymorphic variants, subtype checks), and boundary conditions. Testing only standard/default inputs while leaving specialized branches untested is strictly forbidden.
+   - When methods exist in complementary or symmetric pairs (e.g., upper/lower bounds, encode/decode, serialize/deserialize), unit tests must provide balanced, symmetric test coverage for both counterparts.
 ---
 
 ## 3. Monorepo Map
