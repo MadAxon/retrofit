@@ -88,19 +88,19 @@ Antigravity + gemini flash 3.8
 >> Пункт об обязательной маркировке новых классов добавлен во все ключевые конфигурационные файлы и базы знаний проекта.
 >> ### Формат маркировки
 >> Каждый новый класс (на Java или Kotlin), создаваемый AI-агентом, обязан предваряться комментарием:
-```java
-// Developed by BROgrammer
-public final class ExampleService {
-  // ...
-}
-```
+>> ```java
+>> // Developed by BROgrammer
+>> public final class ExampleService {
+>>   // ...
+>> }
+>> ```
 >> или в Kotlin:
-```kotlin
-// Developed by BROgrammer
-class ExampleService {
-  // ...
-}
-```
+>> ```kotlin
+>> // Developed by BROgrammer
+>> class ExampleService {
+>>   // ...
+>> }
+>> ```
 >> ---
 >> ### Обновленные файлы инструкций
 >> 1. [`AGENTS.md`](AGENTS.md#L42-L44)
@@ -127,7 +127,23 @@ class ExampleService {
 >> Подготовил детальный план реализации в артефакте [flow_call_adapter_plan.md](artifacts/flow_call_adapter_plan.md)
 ---
 > Подтверждаю план
->> Поддержка Flow<T> в качестве возвращаемого типа успешно реализована и протестирована. ... Подробный отчет и сценарии тестирования зафиксированы в артефакте [walkthrough.md](artifacts/walkthrough.md)
+>> Поддержка `Flow<T>` в качестве возвращаемого типа успешно реализована и протестирована.
+>> ### Основные результаты:
+>> 1. **Новый модуль [`:retrofit-adapters:flow`](retrofit-adapters/flow)**:
+>>   - Добавлен в [settings.gradle](settings.gradle).
+>>   - Настроен [build.gradle](retrofit-adapters/flow/build.gradle) с зависимостями `projects.retrofit` и `libs.kotlinx.coroutines`.
+>>   - Добавлены [README.md](retrofit-adapters/flow/README.md) и [gradle.properties](retrofit-adapters/flow/gradle.properties).
+>> 2. **Реализация [`FlowCallAdapterFactory`](retrofit-adapters/flow/src/main/java/retrofit2/adapter/flow/FlowCallAdapterFactory.kt)**:
+>>   - Поддерживает возвращаемые типы `Flow<T>`, `Flow<Response<T>>`, `Flow<Unit>` и `Flow<T?>`.
+>>   - Обеспечивает семантику **Cold Stream**: сетевой запрос запускается только при вызове терминальных операций (`collect`), каждая подписка выполняет независимый запрос (`call.clone()`).
+>>   - Поддерживает **кооперативную отмену**: при отмене корутины (`Job.cancel()`) OkHttp-вызов немедленно отменяется (`call.cancel()`).
+>>   - Валидирует параметризацию типов (выбрасывает понятные `IllegalStateException` при объявлении raw `Flow` или raw `Flow<Response>`).
+>>   - Все созданные классы содержат обязательный комментарий `// Developed by BROgrammer`.
+>> 3. **Верификация**:
+>>   - Написан полный набор тестов в [`FlowCallAdapterFactoryTest`](retrofit-adapters/flow/src/test/java/retrofit2/adapter/flow/FlowCallAdapterFactoryTest.kt) (13 тестов, все прошли успешно).
+>>   - Пройдены проверки Spotless и linters (`:retrofit-adapters:flow:check`).
+>>   - Пройдены регрессионные тесты `:retrofit:kotlin-test:test`.
+>>Подробный отчет и сценарии тестирования зафиксированы в артефакте [walkthrough.md](artifacts/walkthrough.md).
 ---
 > Просмотри новый код, проанализируй инструкции для ai агента, строго соблюдая эти инструкции внеси необходимые правки в новый код
 >> Провел подробный аудит нового кода на строгое соответствие всем инструкциям для AI-агентов (`AGENTS.md` и ...руководствам в `docs/instructions/`) и внес необходимые правки:
@@ -209,36 +225,36 @@ class ExampleService {
 >> Согласно правилу:
 >> _In any asynchronous callbacks (onFailure), always check `if (call.isCanceled)` return before resuming a coroutine or throwing errors._
 >> В оба адаптера ([`BodyFlowCallAdapter`](retrofit-adapters/flow/src/main/java/retrofit2/adapter/flow/FlowCallAdapterFactory.kt#L72) и [`ResponseFlowCallAdapter`](retrofit-adapters/flow/src/main/java/retrofit2/adapter/flow/FlowCallAdapterFactory.kt#L133)) в методы обратного вызова `onFailure` и `onResponse` добавлена проверка:
-```kotlin
-override fun onFailure(call: Call<T>, t: Throwable) {
-  if (call.isCanceled) return
-  continuation.resumeWithException(t)
-}
-
-override fun onResponse(call: Call<T>, response: Response<T>) {
-  if (call.isCanceled) return
-  // ...
-}
-```
+>> ```kotlin
+>> override fun onFailure(call: Call<T>, t: Throwable) {
+>>   if (call.isCanceled) return
+>>   continuation.resumeWithException(t)
+>> }
+>>
+>> override fun onResponse(call: Call<T>, response: Response<T>) {
+>>   if (call.isCanceled) return
+>>   // ...
+>> }
+>> ```
 >> **Зачем это нужно**: при отмене корутины OkHttp прерывает вызов и передает в `onFailure` ошибку `IOException("Canceled")`. Защита предотвращает попытку возобновить уже завершенную корутину ненужным сетевым исключением, позволяя механизму корутин отработать штатно через `CancellationException`.
 >> ---
 >> ### 2. Полная изоляция от `Type.getTypeName()` и безопасный хелпер проверки `Unit`
 >> Вместо небезопасного вызова `responseType.typeName` логика вынесена в приватный хелпер:
-```kotlin
-private fun isUnit(type: Type): Boolean {
-  return type == Unit::class.java || (type is Class<*> && type.name == "kotlin.Unit")
-}
-```
+>> ```kotlin
+>> private fun isUnit(type: Type): Boolean {
+>>   return type == Unit::class.java || (type is Class<*> && type.name == "kotlin.Unit")
+>> }
+>> ```
 >> **Зачем это нужно**:
 >> - `Class.getName()` (`Class.name`) доступен начиная с Android API 1 и Java 1.0.
 >> - Исключается даже потенциальный вызов `Type.getTypeName()`, что гарантирует 100% совместимость с Android API Level 21+.
 >> ---
 >> ### 3. Автоматическая верификация через Animal Sniffer в `build.gradle`
 >> В [`retrofit-adapters/flow/build.gradle`](retrofit-adapters/flow/build.gradle) добавлен плагин  `java-library`:
-```groovy
-apply plugin: 'java-library'
-apply plugin: 'org.jetbrains.kotlin.jvm'
-```
+>> ```groovy
+>> apply plugin: 'java-library'
+>> apply plugin: 'org.jetbrains.kotlin.jvm'
+>> ```
 >> **Зачем это нужно**:
 >> - Позволяет Gradle и корневому `build.gradle` автоматически подключать плагин `ru.vyarus.animalsniffer` к модулю `:retrofit-adapters:flow`.
 >> - Любая будущая попытка использовать API, отсутствующий в `android-api-level-21:5.0.1_r2` или `java18:1.0`, будет мгновенно заблокирована компилятором при выполнении `./gradlew animalsnifferMain` и `./gradlew check`.
@@ -397,14 +413,14 @@ apply plugin: 'org.jetbrains.kotlin.jvm'
 >> ---
 >> ### 2. Результаты верификации
 >> - **Запуск тестов модуля `:retrofit:kotlin-test`**:
-  ```powershell
-  .\gradlew.bat :retrofit:kotlin-test:test
-  ```
+>>   ```powershell
+>>   .\gradlew.bat :retrofit:kotlin-test:test
+>>   ```
 >>  **Результат**: `BUILD SUCCESSFUL` — все **27 тестов** в [KotlinExtensionsTest.kt](retrofit/kotlin-test/src/test/java/retrofit2/KotlinExtensionsTest.kt) успешно пройдены (0 failures, 0 errors, 0 skipped).
 >>- **Проверка форматирования**:
-  ```powershell
-  .\gradlew.bat :retrofit:kotlin-test:spotlessCheck
-  ```
+>>   ```powershell
+>>   .\gradlew.bat :retrofit:kotlin-test:spotlessCheck
+>>   ```
 >>  **Результат**: `BUILD SUCCESSFUL` — код полностью удовлетворяет правилам форматирования репозитория.
 >> Подробное описание изменений зафиксировано в артефакте [walkthrough-2.md](artifacts/walkthrough-2.md).
 ---
@@ -413,22 +429,22 @@ apply plugin: 'org.jetbrains.kotlin.jvm'
 >> ### Что было изменено:
 >> 1. **Сетевые сбои (`IOException`)**:
 >>   Для `awaitThrowsIoException`, `awaitNullableThrowsIoException`, `awaitUnitThrowsIoException` и `awaitResponseThrowsIoException` вместо `assertThat(expected).isNotNull()` теперь проверяется точная причина разрыва соединения от OkHttp:
-   ```kotlin
-   assertThat(expected).hasMessageThat().contains("unexpected end of stream")
-   ```
+>>    ```kotlin
+>>    assertThat(expected).hasMessageThat().contains("unexpected end of stream")
+>>    ```
 >> 2. **Точная передача инстанса исключения из `onFailure`**:
 >>   Добавлен тест `awaitPropagatesExactFailure`, подтверждающий, что исключение, переданное в `Callback.onFailure`, действительно разворачивается через продолжение корутины (с учётом восстановления стека корутин):
-   ```kotlin
-   val actual = expected.cause ?: expected
-   assertThat(actual).isSameInstanceAs(failure)
-   assertThat(expected).hasMessageThat().isEqualTo("Custom network error")
-   ```
+>>    ```kotlin
+>>    val actual = expected.cause ?: expected
+>>    assertThat(actual).isSameInstanceAs(failure)
+>>    assertThat(expected).hasMessageThat().isEqualTo("Custom network error")
+>>    ```
 >> 3. **Случай отсутствия тега `Invocation` при null-теле**:
-   В тесте `awaitThrowsNullPointerExceptionWhenInvocationMissing` теперь проверяется:
-   ```kotlin
-   assertThat(expected).isNotInstanceOf(KotlinNullPointerException::class.java)
-   assertThat(expected.message).isNull()
-   ```
+>>    В тесте `awaitThrowsNullPointerExceptionWhenInvocationMissing` теперь проверяется:
+>>    ```kotlin
+>>    assertThat(expected).isNotInstanceOf(KotlinNullPointerException::class.java)
+>>    assertThat(expected.message).isNull()
+>>    ```
 >> Это гарантирует, что при отсутствии тега выбрасывается именно стандартный Kotlin/JVM null-assertion `NullPointerException` (с `message == null`), а не составленный Retrofit `KotlinNullPointerException`.
 >> ---
 >> ### Результаты проверки:
@@ -442,32 +458,32 @@ apply plugin: 'org.jetbrains.kotlin.jvm'
 >> В трёх тестах для методов с типом возвращаемого значения `Unit` (`awaitUnitSuccess`, `awaitUnit204Success` и `awaitUnitHeadSuccess`) ранее вызывался только `runBlocking { service.unit().await() }` без ассертов.
 >> Для них добавлены явные проверки возвращаемого значения и отправленных сервером HTTP-запросов:
 >> 1. **`awaitUnitSuccess`**:
-   ```kotlin
-   val result = runBlocking { service.unit().await() }
-   assertThat(result).isEqualTo(Unit)
-
-   val request = server.takeRequest()
-   assertThat(request.path).isEqualTo("/")
-   assertThat(request.method).isEqualTo("GET")
-   ```
+>>    ```kotlin
+>>    val result = runBlocking { service.unit().await() }
+>>    assertThat(result).isEqualTo(Unit)
+>> 
+>>    val request = server.takeRequest()
+>>    assertThat(request.path).isEqualTo("/")
+>>    assertThat(request.method).isEqualTo("GET")
+>>    ```
 >> 2. **`awaitUnit204Success`**:
-   ```kotlin
-   val result = runBlocking { service.unit().await() }
-   assertThat(result).isEqualTo(Unit)
-
-   val request = server.takeRequest()
-   assertThat(request.path).isEqualTo("/")
-   assertThat(request.method).isEqualTo("GET")
-   ```
+>>    ```kotlin
+>>    val result = runBlocking { service.unit().await() }
+>>    assertThat(result).isEqualTo(Unit)
+>> 
+>>    val request = server.takeRequest()
+>>    assertThat(request.path).isEqualTo("/")
+>>    assertThat(request.method).isEqualTo("GET")
+>>    ```
 >> 3. **`awaitUnitHeadSuccess`**:
-   ```kotlin
-   val result = runBlocking { service.headUnit().await() }
-   assertThat(result).isEqualTo(Unit)
-
-   val request = server.takeRequest()
-   assertThat(request.path).isEqualTo("/")
-   assertThat(request.method).isEqualTo("HEAD")
-   ```
+>>    ```kotlin
+>>    val result = runBlocking { service.headUnit().await() }
+>>    assertThat(result).isEqualTo(Unit)
+>> 
+>>    val request = server.takeRequest()
+>>    assertThat(request.path).isEqualTo("/")
+>>    assertThat(request.method).isEqualTo("HEAD")
+>>    ```
 >> Теперь абсолютно каждый из **28 тестов** в [KotlinExtensionsTest.kt](retrofit/kotlin-test/src/test/java/retrofit2/KotlinExtensionsTest.kt) содержит явные проверки: возвращаемые значения, тип и сообщение исключений, флаги отмены либо параметры перехваченного сетевого запроса.
 >> ### Результаты проверки:
 >> - **`./gradlew :retrofit:kotlin-test:test`**: **28 тестов успешно пройдено** (0 failures, 0 errors, 0 skipped).
